@@ -15,18 +15,24 @@ import kotlin.system.exitProcess
 import kotlin.time.Duration
 
 const val ARRAY_SIZE = 1_000_000
-const val SEARCH_REPEATING_COUNT = 1
-const val RUNS_PER_LOG = 1
 val KEY_RANGE = 1..ARRAY_SIZE
 val list = List(ARRAY_SIZE) { KEY_RANGE.random() }
 
 @Composable
 @Preview
 fun App() {
+    val timeLabel = StringTemplate1<Duration?> { "Время: ${it?.toString()?.replace("us", "µs") ?: "Не замеряно"}" }
+    val indexLabel = StringTemplate1<Int?> { "Индекс: ${it ?: "Не найден"}" }
     MaterialTheme {
-        Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp)
+        ) {
             Box(
-                modifier = Modifier.height(72.dp).fillMaxWidth(),
+                modifier = Modifier
+                    .height(72.dp)
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -36,40 +42,59 @@ fun App() {
                 )
             }
             Divider(modifier = Modifier.padding(top = 8.dp))
-            Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
                 SearchColumn(
                     list = list,
-                    optimalAlgorithm = IntLinearOptimizedSearchAlgorithm(),
-                    nonOptimalAlgorithm = IntLinearUnoptimizedSearchAlgorithm(),
                     headerLabel = "Неупорядоченный массив",
                     nonOptimalAlgorithmLabel = "Неоптимальный поиск",
                     optimalAlgorithmLabel = "Оптимальный поиск",
                     keyLabel = "Ключ",
                     badKeyLabel = "*Ключ должен быть числом",
                     startSearchLabel = "Найти",
-                    timeLabel = { "Время: ${it.toString().replace("us", "µs")}" },
-                    indexLabel = { "Индекс: $it" },
-                    modifier = Modifier.fillMaxHeight().weight(1f)
+                    timeLabel = timeLabel,
+                    indexLabel = indexLabel,
+                    searchStarter = SearchStarter(
+                        IntLinearOptimizedSearchAlgorithm(),
+                        IntLinearUnoptimizedSearchAlgorithm()
+                    ),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .weight(1f)
                 )
-                Divider(modifier = Modifier.padding(8.dp).fillMaxHeight().width(1.dp))
+                Divider(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxHeight()
+                        .width(1.dp)
+                )
                 SearchColumn(
                     list = remember(list) { list.sorted() },
-                    optimalAlgorithm = LinearOptimizedSearchForSortedCollection(),
-                    nonOptimalAlgorithm = IntLinearOptimizedSearchAlgorithm(),
                     headerLabel = "Упорядоченный массив",
                     nonOptimalAlgorithmLabel = "Как в неупорядоченном",
                     optimalAlgorithmLabel = "Как в упорядоченном",
                     keyLabel = "Ключ",
                     badKeyLabel = "*Ключ должен быть числом",
                     startSearchLabel = "Найти",
-                    timeLabel = { "Время: ${it.toString().replace("us", "µs")}" },
-                    indexLabel = { "Индекс: $it" },
-                    modifier = Modifier.fillMaxHeight().weight(1f)
+                    timeLabel = timeLabel,
+                    indexLabel = indexLabel,
+                    searchStarter = SearchStarter(
+                        IntLinearOptimizedSearchForSortedCollection(),
+                        IntLinearOptimizedSearchAlgorithm()
+                    ),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .weight(1f)
                 )
             }
             Divider(modifier = Modifier.padding(bottom = 8.dp))
             Box(
-                modifier = Modifier.height(48.dp).fillMaxWidth(),
+                modifier = Modifier
+                    .height(48.dp)
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 Button(onClick = { exitProcess(0) }) {
@@ -83,8 +108,6 @@ fun App() {
 @Composable
 fun SearchColumn(
     list: List<Int>,
-    optimalAlgorithm: SearchAlgorithm<Int>,
-    nonOptimalAlgorithm: SearchAlgorithm<Int>,
     modifier: Modifier = Modifier,
     headerLabel: String,
     nonOptimalAlgorithmLabel: String,
@@ -93,7 +116,8 @@ fun SearchColumn(
     badKeyLabel: String,
     startSearchLabel: String,
     timeLabel: StringTemplate1<Duration?> = StringTemplate1 { "Time: $it" },
-    indexLabel: StringTemplate1<Int?> = StringTemplate1 { "Index: $it" }
+    indexLabel: StringTemplate1<Int?> = StringTemplate1 { "Index: $it" },
+    searchStarter: SearchStarter
 ) {
     // region fields
     var key by remember { mutableStateOf(0) }
@@ -107,31 +131,21 @@ fun SearchColumn(
     var searchAttempt by remember { mutableStateOf(0) }
     val startSearch = remember { fun() { searchAttempt++ } }
     var isSearchProcessing by remember { mutableStateOf(false) }
-    var searchProgress by remember { mutableStateOf(0.0) }
-    val optimalSearchLogger = remember {
-        fun(runI: Int, runsCount: Int) {
-            searchProgress = 0.5 * runI / runsCount
-        }
-    }
-    val nonOptimalSearchLogger = remember {
-        fun(runI: Int, runsCount: Int) {
-            searchProgress = 0.5 + 0.5 * runI.toDouble() / runsCount
-        }
-    }
 
     LaunchedEffect(searchAttempt) {
         if (searchAttempt == 0) return@LaunchedEffect
         isSearchProcessing = true
-        thread { runBlocking {
-            val optimalResult = optimalAlgorithm.find(list, key, SEARCH_REPEATING_COUNT, RUNS_PER_LOG, optimalSearchLogger)
-            val nonOptimalResult = nonOptimalAlgorithm.find(list, key, SEARCH_REPEATING_COUNT, RUNS_PER_LOG, nonOptimalSearchLogger)
-            optimalAlgorithmMeasuredTime = optimalResult.searchTime
-            optimalAlgorithmResultIndex = (if (optimalResult.isSuccess) optimalResult.data!!.resultIndex else -1)
-            nonOptimalAlgorithmMeasuredTime = nonOptimalResult.searchTime
-            nonOptimalAlgorithmResultIndex = (if (nonOptimalResult.isSuccess) nonOptimalResult.data!!.resultIndex else -1)
-            searchProgress = 0.0
+        searchStarter.start(key, list) {
+                _nonOptimalAlgorithmMeasuredTime,
+                _nonOptimalAlgorithmResultIndex,
+                _optimalAlgorithmMeasuredTime,
+                _optimalAlgorithmResultIndex ->
+            nonOptimalAlgorithmMeasuredTime = _nonOptimalAlgorithmMeasuredTime
+            nonOptimalAlgorithmResultIndex = _nonOptimalAlgorithmResultIndex
+            optimalAlgorithmMeasuredTime = _optimalAlgorithmMeasuredTime
+            optimalAlgorithmResultIndex = _optimalAlgorithmResultIndex
             isSearchProcessing = false
-        } }
+        }
     }
     // endregion
     // region block
@@ -164,8 +178,7 @@ fun SearchColumn(
             keyLabel = keyLabel,
             startSearch = startSearch,
             startSearchLabel = startSearchLabel,
-            isSearchProcessing = isSearchProcessing,
-            searchProgress = searchProgress
+            isSearchProcessing = isSearchProcessing
         )
     }
     // endregion
@@ -179,8 +192,7 @@ fun StartSearchBlock(
     keyLabel: String,
     startSearch: () -> Unit,
     startSearchLabel: String,
-    isSearchProcessing: Boolean,
-    searchProgress: Double
+    isSearchProcessing: Boolean
 ) {
     var isKeyError by remember { mutableStateOf(false) }
     Row(
@@ -208,7 +220,6 @@ fun StartSearchBlock(
                 if (isSearchProcessing) {
                     IconButton(onClick = {}) {
                         CircularProgressIndicator(
-                            searchProgress.toFloat(),
                             modifier = Modifier.size(32.dp),
                             strokeWidth = 3.dp
                         )
@@ -260,6 +271,35 @@ fun AlgorithmResultBlock(
         )
         Text(text = timeLabel.format(measuredTime))
         Text(text = indexLabel.format(resultIndex))
+    }
+}
+
+class SearchStarter(
+    private val optimalAlgorithm: SearchAlgorithm<Int>,
+    private val nonOptimalAlgorithm: SearchAlgorithm<Int>
+) {
+    fun start(
+        key: Int,
+        list: List<Int>,
+        onFinish: (
+            nonOptimalAlgorithmMeasuredTime: Duration,
+            nonOptimalAlgorithmResultIndex: Int?,
+            optimalAlgorithmMeasuredTime: Duration,
+            optimalAlgorithmResultIndex: Int?
+        ) -> Unit
+    ) {
+        thread {
+            runBlocking {
+                val optimalResult = optimalAlgorithm.find(list, key)
+                val nonOptimalResult = nonOptimalAlgorithm.find(list, key)
+                onFinish(
+                    nonOptimalResult.searchTime,
+                    nonOptimalResult.data?.resultIndex,
+                    optimalResult.searchTime,
+                    optimalResult.data?.resultIndex
+                )
+            }
+        }
     }
 }
 
