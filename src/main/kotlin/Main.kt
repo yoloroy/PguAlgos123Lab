@@ -14,15 +14,28 @@ import kotlin.concurrent.thread
 import kotlin.system.exitProcess
 import kotlin.time.Duration
 
-const val ARRAY_SIZE = 1_000_000
-val KEY_RANGE = 1..ARRAY_SIZE
-val list = List(ARRAY_SIZE) { KEY_RANGE.random() }
+// region array init
+const val arraySize = 1_000_000
+val keyRange = 1..arraySize
+val list = List(arraySize) { keyRange.random() }
+// endregion
+// region labels
+val timeLabel = StringTemplate1<Duration?> { "Время: ${it?.toString()?.replace("us", "µs") ?: "Не замеряно"}" }
+val indexLabel = StringTemplate1<Int?> { "Индекс: ${it ?: "Не найден"}" }
+const val unsortedArrayLabel = "Неупорядоченный массив"
+const val unsortedArrayNonOptimalAlgorithmLabel = "Неоптимальный поиск"
+const val unsortedArrayOptimalAlgorithmLabel = "Оптимальный поиск"
+const val sortedArrayNonOptimalAlgorithmLabel = "Как в неупорядоченном"
+const val sortedArrayOptimalAlgorithmLabel = "Как в упорядоченном"
+const val keyLabel = "Ключ"
+const val badKeyLabel = "*Ключ должен быть числом"
+const val startSearchLabel = "Найти"
+const val sortedArrayLabel = "Упорядоченный массив"
+// endregion
 
 @Composable
 @Preview
 fun App() {
-    val timeLabel = StringTemplate1<Duration?> { "Время: ${it?.toString()?.replace("us", "µs") ?: "Не замеряно"}" }
-    val indexLabel = StringTemplate1<Int?> { "Индекс: ${it ?: "Не найден"}" }
     MaterialTheme {
         Column(
             modifier = Modifier
@@ -49,12 +62,12 @@ fun App() {
             ) {
                 SearchColumn(
                     list = list,
-                    headerLabel = "Неупорядоченный массив",
-                    nonOptimalAlgorithmLabel = "Неоптимальный поиск",
-                    optimalAlgorithmLabel = "Оптимальный поиск",
-                    keyLabel = "Ключ",
-                    badKeyLabel = "*Ключ должен быть числом",
-                    startSearchLabel = "Найти",
+                    headerLabel = unsortedArrayLabel,
+                    nonOptimalAlgorithmLabel = unsortedArrayNonOptimalAlgorithmLabel,
+                    optimalAlgorithmLabel = unsortedArrayOptimalAlgorithmLabel,
+                    keyLabel = keyLabel,
+                    badKeyLabel = badKeyLabel,
+                    startSearchLabel = startSearchLabel,
                     timeLabel = timeLabel,
                     indexLabel = indexLabel,
                     searchStarter = SearchStarter(
@@ -73,12 +86,12 @@ fun App() {
                 )
                 SearchColumn(
                     list = remember(list) { list.sorted() },
-                    headerLabel = "Упорядоченный массив",
-                    nonOptimalAlgorithmLabel = "Как в неупорядоченном",
-                    optimalAlgorithmLabel = "Как в упорядоченном",
-                    keyLabel = "Ключ",
-                    badKeyLabel = "*Ключ должен быть числом",
-                    startSearchLabel = "Найти",
+                    headerLabel = sortedArrayLabel,
+                    nonOptimalAlgorithmLabel = sortedArrayNonOptimalAlgorithmLabel,
+                    optimalAlgorithmLabel = sortedArrayOptimalAlgorithmLabel,
+                    keyLabel = keyLabel,
+                    badKeyLabel = badKeyLabel,
+                    startSearchLabel = startSearchLabel,
                     timeLabel = timeLabel,
                     indexLabel = indexLabel,
                     searchStarter = SearchStarter(
