@@ -36,6 +36,28 @@ const val sortedArrayLabel = "Упорядоченный массив"
 @Composable
 @Preview
 fun App() {
+    @Composable
+    fun LocalizedSearchColumn(
+        list: List<Int>,
+        headerLabel: String,
+        nonOptimalAlgorithmLabel: String,
+        optimalAlgorithmLabel: String,
+        searchStarter: SearchStarter,
+        modifier: Modifier
+    ) = SearchColumn(
+        list,
+        modifier,
+        headerLabel,
+        nonOptimalAlgorithmLabel,
+        optimalAlgorithmLabel,
+        keyLabel,
+        badKeyLabel,
+        startSearchLabel,
+        timeLabel,
+        indexLabel,
+        searchStarter
+    )
+
     MaterialTheme {
         Column(
             modifier = Modifier
@@ -60,16 +82,11 @@ fun App() {
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                SearchColumn(
+                LocalizedSearchColumn(
                     list = list,
                     headerLabel = unsortedArrayLabel,
                     nonOptimalAlgorithmLabel = unsortedArrayNonOptimalAlgorithmLabel,
                     optimalAlgorithmLabel = unsortedArrayOptimalAlgorithmLabel,
-                    keyLabel = keyLabel,
-                    badKeyLabel = badKeyLabel,
-                    startSearchLabel = startSearchLabel,
-                    timeLabel = timeLabel,
-                    indexLabel = indexLabel,
                     searchStarter = SearchStarter(
                         IntLinearOptimizedSearchAlgorithm(),
                         IntLinearUnoptimizedSearchAlgorithm()
@@ -84,16 +101,11 @@ fun App() {
                         .fillMaxHeight()
                         .width(1.dp)
                 )
-                SearchColumn(
+                LocalizedSearchColumn(
                     list = remember(list) { list.sorted() },
                     headerLabel = sortedArrayLabel,
                     nonOptimalAlgorithmLabel = sortedArrayNonOptimalAlgorithmLabel,
                     optimalAlgorithmLabel = sortedArrayOptimalAlgorithmLabel,
-                    keyLabel = keyLabel,
-                    badKeyLabel = badKeyLabel,
-                    startSearchLabel = startSearchLabel,
-                    timeLabel = timeLabel,
-                    indexLabel = indexLabel,
                     searchStarter = SearchStarter(
                         IntLinearOptimizedSearchForSortedCollection(),
                         IntLinearOptimizedSearchAlgorithm()
