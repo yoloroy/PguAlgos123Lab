@@ -10,11 +10,11 @@ class IntLinearOptimizedSearchForSortedCollection : SearchAlgorithm<Int>() {
         itemToSearch: Int
     ): Result<Int> {
         require(list.isSorted())
-        val boundedArray = (list + itemToSearch).toIntArray()
+        val boundedArray = (list + (itemToSearch + 1)).toIntArray()
         val timedIndex = measureTimedValue measure@ {
             var i = 0
             while (boundedArray[i] < itemToSearch) i++
-            return@measure i.takeIf { it != boundedArray.lastIndex && boundedArray[i] == itemToSearch }
+            return@measure i.takeIf { boundedArray[i] == itemToSearch }
         }
         return Result(
             timedIndex.value?.let { ResultWithoutTime(list, itemToSearch, it) },

@@ -18,6 +18,14 @@ import kotlin.time.Duration
 const val arraySize = 1_000_000
 val keyRange = 1..arraySize
 val list = List(arraySize) { keyRange.random() }
+val sortedList = buildList {
+    val range = 1..5
+    var lastItem = range.random()
+    repeat(arraySize) {
+        add(lastItem)
+        lastItem += range.random()
+    }
+}
 // endregion
 // region labels
 val timeLabel = StringTemplate1<Duration?> { "Время: ${it?.toString()?.replace("us", "µs") ?: "Не замеряно"}" }
@@ -36,28 +44,6 @@ const val sortedArrayLabel = "Упорядоченный массив"
 @Composable
 @Preview
 fun App() {
-    @Composable
-    fun LocalizedSearchColumn(
-        list: List<Int>,
-        headerLabel: String,
-        nonOptimalAlgorithmLabel: String,
-        optimalAlgorithmLabel: String,
-        searchStarter: SearchStarter,
-        modifier: Modifier
-    ) = SearchColumn(
-        list,
-        modifier,
-        headerLabel,
-        nonOptimalAlgorithmLabel,
-        optimalAlgorithmLabel,
-        keyLabel,
-        badKeyLabel,
-        startSearchLabel,
-        timeLabel,
-        indexLabel,
-        searchStarter
-    )
-
     MaterialTheme {
         Column(
             modifier = Modifier
@@ -82,11 +68,16 @@ fun App() {
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                LocalizedSearchColumn(
+                SearchColumn(
                     list = list,
                     headerLabel = unsortedArrayLabel,
                     nonOptimalAlgorithmLabel = unsortedArrayNonOptimalAlgorithmLabel,
                     optimalAlgorithmLabel = unsortedArrayOptimalAlgorithmLabel,
+                    keyLabel = keyLabel,
+                    badKeyLabel = badKeyLabel,
+                    startSearchLabel = startSearchLabel,
+                    timeLabel = timeLabel,
+                    indexLabel = indexLabel,
                     searchStarter = SearchStarter(
                         IntLinearOptimizedSearchAlgorithm(),
                         IntLinearUnoptimizedSearchAlgorithm()
@@ -101,11 +92,16 @@ fun App() {
                         .fillMaxHeight()
                         .width(1.dp)
                 )
-                LocalizedSearchColumn(
-                    list = remember(list) { list.sorted() },
+                SearchColumn(
+                    list = sortedList,
                     headerLabel = sortedArrayLabel,
                     nonOptimalAlgorithmLabel = sortedArrayNonOptimalAlgorithmLabel,
                     optimalAlgorithmLabel = sortedArrayOptimalAlgorithmLabel,
+                    keyLabel = keyLabel,
+                    badKeyLabel = badKeyLabel,
+                    startSearchLabel = startSearchLabel,
+                    timeLabel = timeLabel,
+                    indexLabel = indexLabel,
                     searchStarter = SearchStarter(
                         IntLinearOptimizedSearchForSortedCollection(),
                         IntLinearOptimizedSearchAlgorithm()
